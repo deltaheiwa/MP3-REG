@@ -64,48 +64,52 @@ if __name__ == "__main__":
             test_mse_br = np.mean(np.square(nn_batch_relu.forward(X_test) - Y_test))
             current_results["Batch_ReLU"] = {"Train MSE": train_mse_br, "Test MSE": test_mse_br, "model": nn_batch_relu}
 
-            results[filename] = current_results
+            results[filename] = {
+                "data": (X_train, Y_train, X_test, Y_test, X_full),
+                "models": current_results
+            }
+
             print(f"Results for {filename}:")
             print(f"  Batch+Tanh:  Train MSE: {train_mse_bt:.4f}, Test MSE: {test_mse_bt:.4f}")
             print(f"  Batch+ReLU:  Train MSE: {train_mse_br:.4f}, Test MSE: {test_mse_br:.4f}")
             print("-" * 30)
 
         if file_list and results:
-            first_file = file_list[0]
-            first_file_results = results[first_file]
+            print("\n--- Beginning Sequential Visualization ---")
+            print("Close each plot window to view the next one.\n")
 
-            _, _, _, _, X_full_viz, _ = load_and_split_data(first_file)
-            X_train_viz, Y_train_viz, X_test_viz, Y_test_viz, _, _ = load_and_split_data(first_file)
+            for filepath in file_list:
+                # Retrieve the exact data splits used for this specific file
+                X_train, Y_train, X_test, Y_test, X_full = results[filepath]["data"]
+                file_models = results[filepath]["models"]
 
-            print(f"\n--- Generating detailed visualization example for {first_file} ---")
+                X_min, X_max = X_full.min(), X_full.max()
+                X_plot_viz = np.linspace(X_min, X_max, 100).reshape(-1, 1)
 
-            min_test_mse = float('inf')
-            best_model_name = ""
-            best_model = None
-            for name, m_results in first_file_results.items():
-                if m_results["Test MSE"] < min_test_mse:
-                    min_test_mse = m_results["Test MSE"]
-                    best_model_name = name
-                    best_model = m_results["model"]
+                # Iterate through all 3 trained models for this specific file
+                for model_name, m_results in file_models.items():
+                    print(f"Plotting {filepath.name} -> {model_name}")
 
-            print(f"Plotting best performing model: {best_model_name} (Test MSE: {min_test_mse:.4f})")
+                    model = m_results["model"]
+                    Y_plot_pred_viz = model.forward(X_plot_viz)
 
-            X_min, X_max = X_full_viz.min(), X_full_viz.max()
-            X_plot_viz = np.linspace(X_min, X_max, 100).reshape(-1, 1)
+                    plt.figure(figsize=(10, 6))
 
-            Y_plot_pred_viz = best_model.forward(X_plot_viz)
+                    plt.scatter(X_train, Y_train, color='blue', label='Training Data', alpha=0.6, s=15)
+                    plt.scatter(X_test, Y_test, color='green', label='Testing Data', alpha=0.6, s=15, marker='x')
 
-            plt.figure(figsize=(10, 6))
+                    plt.plot(X_plot_viz, Y_plot_pred_viz, color='red', label=f'Model Fit ({model_name})', linewidth=2.5)
 
-            plt.scatter(X_train_viz, Y_train_viz, color='blue', label='Training Data', alpha=0.6, s=15)
-            plt.scatter(X_test_viz, Y_test_viz, color='green', label='Testing Data', alpha=0.6, s=15, marker='x')
+                    plt.title(f'Dataset: {filepath.name} | Model: {model_name}')
+                    plt.xlabel('X (Input)')
+                    plt.ylabel('Y (Target)')
 
-            plt.plot(X_plot_viz, Y_plot_pred_viz, color='red', label=f'Model Fit ({best_model_name})', linewidth=2.5)
+                    # Include MSE in the legend for easy reading on the plot
+                    test_mse = m_results['Test MSE']
+                    plt.plot([], [], ' ', label=f'Test MSE: {test_mse:.4f}')
 
-            plt.title(f'Neural Network Approximation - Dataset: {first_file}')
-            plt.xlabel('X (Input)')
-            plt.ylabel('Y (Target)')
-            plt.legend()
-            plt.grid(True, linestyle='--', alpha=0.7)
+                    plt.legend()
+                    plt.grid(True, linestyle='--', alpha=0.7)
 
-            plt.show()
+                    # plt.show() halts Python execution until the window is closed
+                    plt.show()
