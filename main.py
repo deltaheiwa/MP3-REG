@@ -64,6 +64,18 @@ if __name__ == "__main__":
             test_mse_br = np.mean(np.square(nn_batch_relu.forward(X_test) - Y_test))
             current_results["Batch_ReLU"] = {"Train MSE": train_mse_br, "Test MSE": test_mse_br, "model": nn_batch_relu}
 
+            nn_online_tanh = SimpleNeuralNet(hidden_size=hidden_size_to_use, activation='tanh')
+            nn_online_tanh.train(X_train, Y_train, epochs=5000, learning_rate=0.01, method='online')
+            train_mse_ot = np.mean(np.square(nn_online_tanh.forward(X_train) - Y_train))
+            test_mse_ot = np.mean(np.square(nn_online_tanh.forward(X_test) - Y_test))
+            current_results["Online_Tanh"] = {"Train MSE": train_mse_ot, "Test MSE": test_mse_ot, "model": nn_online_tanh}
+
+            nn_online_relu = SimpleNeuralNet(hidden_size=hidden_size_to_use, activation='relu')
+            nn_online_relu.train(X_train, Y_train, epochs=2000, learning_rate=0.01)
+            train_mse_or = np.mean(np.square(nn_online_relu.forward(X_train) - Y_train))
+            test_mse_or = np.mean(np.square(nn_online_relu.forward(X_test) - Y_test))
+            current_results["Online_ReLU"] = {"Train MSE": train_mse_or, "Test MSE": test_mse_or, "model": nn_online_relu}
+
             results[filename] = {
                 "data": (X_train, Y_train, X_test, Y_test, X_full),
                 "models": current_results
@@ -72,6 +84,8 @@ if __name__ == "__main__":
             print(f"Results for {filename}:")
             print(f"  Batch+Tanh:  Train MSE: {train_mse_bt:.4f}, Test MSE: {test_mse_bt:.4f}")
             print(f"  Batch+ReLU:  Train MSE: {train_mse_br:.4f}, Test MSE: {test_mse_br:.4f}")
+            print(f"  Online+Tanh: Train MSE: {train_mse_ot:.4f}, Test MSE: {test_mse_ot:.4f}")
+            print(f"  Online+ReLU: Train MSE: {train_mse_or:.4f}, Test MSE: {test_mse_or:.4f}")
             print("-" * 30)
 
         if file_list and results:
@@ -79,14 +93,12 @@ if __name__ == "__main__":
             print("Close each plot window to view the next one.\n")
 
             for filepath in file_list:
-                # Retrieve the exact data splits used for this specific file
                 X_train, Y_train, X_test, Y_test, X_full = results[filepath]["data"]
                 file_models = results[filepath]["models"]
 
                 X_min, X_max = X_full.min(), X_full.max()
                 X_plot_viz = np.linspace(X_min, X_max, 100).reshape(-1, 1)
 
-                # Iterate through all 3 trained models for this specific file
                 for model_name, m_results in file_models.items():
                     print(f"Plotting {filepath.name} -> {model_name}")
 
@@ -104,12 +116,10 @@ if __name__ == "__main__":
                     plt.xlabel('X (Input)')
                     plt.ylabel('Y (Target)')
 
-                    # Include MSE in the legend for easy reading on the plot
                     test_mse = m_results['Test MSE']
                     plt.plot([], [], ' ', label=f'Test MSE: {test_mse:.4f}')
 
                     plt.legend()
                     plt.grid(True, linestyle='--', alpha=0.7)
 
-                    # plt.show() halts Python execution until the window is closed
                     plt.show()

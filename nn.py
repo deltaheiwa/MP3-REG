@@ -59,14 +59,23 @@ class SimpleNeuralNet:
         self.W2 -= learning_rate * dW2
         self.b2 -= learning_rate * db2
 
-    def train(self, X_train, Y_train, epochs, learning_rate):
+    def train(self, X_train, Y_train, epochs, learning_rate, method='batch'):
         mse_history = []
         m = X_train.shape[0]
 
         for epoch in range(epochs):
-            predictions = self.forward(X_train)
-            dW1, db1, dW2, db2 = self.backward(X_train, Y_train)
-            self.update_params(dW1, db1, dW2, db2, learning_rate)
+            if method == 'batch':
+                predictions = self.forward(X_train)
+                dW1, db1, dW2, db2 = self.backward(X_train, Y_train)
+                self.update_params(dW1, db1, dW2, db2, learning_rate)
+
+            elif method == 'online':
+                for i in range(m):
+                    X_i = X_train[i:i + 1]
+                    Y_i = Y_train[i:i + 1]
+                    self.forward(X_i)
+                    dW1, db1, dW2, db2 = self.backward(X_i, Y_i)
+                    self.update_params(dW1, db1, dW2, db2, learning_rate)
 
             if epoch % 100 == 0:
                 loss = np.mean(np.square(self.forward(X_train) - Y_train))
