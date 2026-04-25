@@ -65,7 +65,7 @@ if __name__ == "__main__":
             current_results["Batch_ReLU"] = {"Train MSE": train_mse_br, "Test MSE": test_mse_br, "model": nn_batch_relu}
 
             nn_online_tanh = SimpleNeuralNet(hidden_size=hidden_size_to_use, activation='tanh')
-            nn_online_tanh.train(X_train, Y_train, epochs=5000, learning_rate=0.01, method='online')
+            nn_online_tanh.train(X_train, Y_train, epochs=2000, learning_rate=0.01, method='online')
             train_mse_ot = np.mean(np.square(nn_online_tanh.forward(X_train) - Y_train))
             test_mse_ot = np.mean(np.square(nn_online_tanh.forward(X_test) - Y_test))
             current_results["Online_Tanh"] = {"Train MSE": train_mse_ot, "Test MSE": test_mse_ot, "model": nn_online_tanh}
